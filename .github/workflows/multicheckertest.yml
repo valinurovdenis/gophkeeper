@@ -1,0 +1,21 @@
+name: multichecker test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master 
+
+jobs: 
+  local_tests:
+    name: Multichecker Tests
+    runs-on: ubuntu-latest
+    container: golang:1.23
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Build multichecker
+        run: go build -o multichecker_static internal/staticlint/main.go
+      - name: Run custom multichecker tests
+        run: go vet -vettool=multichecker_static ./...
