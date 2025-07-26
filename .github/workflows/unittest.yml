@@ -1,0 +1,19 @@
+name: func test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master 
+
+jobs: 
+  local_tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    container: golang:1.23
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Run go tests
+        run: go test ./...

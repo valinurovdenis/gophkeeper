@@ -1,0 +1,28 @@
+name: coverage test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master 
+
+jobs: 
+  local_tests:
+    name: Coverage Tests
+    runs-on: ubuntu-latest
+    container: golang:1.23
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Run go tests
+        run: go test -v -coverprofile=coverage.out ./...
+      - name: Filter mocks and proto generated files
+        run: cat coverage.out | grep -v "proto\|mocks" > cover.out
+      - name: Show coverage summary 
+        run: go tool cover -func=cover.out
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report 
+          path: coverage.out

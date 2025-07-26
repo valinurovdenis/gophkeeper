@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package gophkeeper;
+
+import "internal/proto/user.proto";
+import "internal/proto/file.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "./;proto";
+
+service GophKeeperService {
+  rpc Register(user.UserCred) returns (google.protobuf.Empty);
+  rpc Login(user.UserCred) returns (google.protobuf.Empty);
+  rpc GetUserFiles(google.protobuf.Empty) returns (file.ListFiles);
+
+  rpc UploadFile(stream file.FileStream) returns (file.UploadResponse);
+  rpc DownloadFile(file.FileId) returns (stream file.FileStream);
+  rpc DeleteFile(file.FileId) returns (google.protobuf.Empty);
+}
