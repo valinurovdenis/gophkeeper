@@ -23,7 +23,6 @@ func GetDB() *sql.DB {
 	if err != nil {
 		panic(err)
 	}
-	defer db.Close()
 	return db
 }
 
@@ -45,6 +44,7 @@ func Run() error {
 	}
 
 	db := GetDB()
+	defer db.Close()
 	s3Storage := GetS3()
 
 	metaDataStorage := metadatastorage.NewPostgresqlStorageStorage(db)
@@ -54,7 +54,10 @@ func Run() error {
 	}
 	userStorage := userstorage.NewPostgresqlUserStorage(db)
 	auth := auth.NewAuthenticator(config.SecretKey, userStorage)
-	grpcHandler := handlers.NewGophKeeperHandler(*service, *auth, userStorage)
+	grpcHandler, err := handlers.NewGophKeeperHandler(*service, *auth, userStorage)
+	if err != nil {
+		return err
+	}
 	grpcSrv := handlers.KeeperGrpcRouter(*grpcHandler)
 	listen, _ := net.Listen("tcp", config.LocalURL)
 	return grpcSrv.Serve(listen)

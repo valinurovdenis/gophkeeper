@@ -13,8 +13,8 @@ require (
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/minio/minio-go/v7 v7.0.92
 	github.com/spf13/cobra v1.9.1
-	github.com/valinurovdenis/urlshortener v0.0.0-20250511161607-d6066b9e4433
 	go.uber.org/zap v1.27.0
+	golang.org/x/crypto v0.37.0
 	golang.org/x/tools v0.31.0
 	google.golang.org/grpc v1.73.0
 	google.golang.org/protobuf v1.36.6
@@ -43,7 +43,6 @@ require (
 	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/tinylib/msgp v1.3.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
-	golang.org/x/crypto v0.37.0 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20231108232855-2478ac86f678 // indirect
 	golang.org/x/mod v0.24.0 // indirect
 	golang.org/x/net v0.38.0 // indirect

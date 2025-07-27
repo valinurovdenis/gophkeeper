@@ -16,6 +16,7 @@ message FileInfo {
     uint64 modified = 5;
     uint64 size = 6;
     string comment = 7;
+    bytes encryption_key = 8;
 }
 
 message FileStream {

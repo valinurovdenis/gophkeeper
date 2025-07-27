@@ -12,6 +12,7 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
+	sync "sync"
 	unsafe "unsafe"
 )
 
@@ -22,15 +23,62 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type ServicePublicKey struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PublicKey     []byte                 `protobuf:"bytes,1,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ServicePublicKey) Reset() {
+	*x = ServicePublicKey{}
+	mi := &file_internal_proto_gophkeeper_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ServicePublicKey) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ServicePublicKey) ProtoMessage() {}
+
+func (x *ServicePublicKey) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_gophkeeper_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ServicePublicKey.ProtoReflect.Descriptor instead.
+func (*ServicePublicKey) Descriptor() ([]byte, []int) {
+	return file_internal_proto_gophkeeper_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *ServicePublicKey) GetPublicKey() []byte {
+	if x != nil {
+		return x.PublicKey
+	}
+	return nil
+}
+
 var File_internal_proto_gophkeeper_proto protoreflect.FileDescriptor
 
 const file_internal_proto_gophkeeper_proto_rawDesc = "" +
 	"\n" +
 	"\x1finternal/proto/gophkeeper.proto\x12\n" +
-	"gophkeeper\x1a\x19internal/proto/user.proto\x1a\x19internal/proto/file.proto\x1a\x1bgoogle/protobuf/empty.proto2\xcf\x02\n" +
-	"\x11GophKeeperService\x122\n" +
-	"\bRegister\x12\x0e.user.UserCred\x1a\x16.google.protobuf.Empty\x12/\n" +
-	"\x05Login\x12\x0e.user.UserCred\x1a\x16.google.protobuf.Empty\x127\n" +
+	"gophkeeper\x1a\x19internal/proto/user.proto\x1a\x19internal/proto/file.proto\x1a\x1bgoogle/protobuf/empty.proto\"1\n" +
+	"\x10ServicePublicKey\x12\x1d\n" +
+	"\n" +
+	"public_key\x18\x01 \x01(\fR\tpublicKey2\xdb\x02\n" +
+	"\x11GophKeeperService\x128\n" +
+	"\bRegister\x12\x0e.user.UserData\x1a\x1c.gophkeeper.ServicePublicKey\x125\n" +
+	"\x05Login\x12\x0e.user.UserData\x1a\x1c.gophkeeper.ServicePublicKey\x127\n" +
 	"\fGetUserFiles\x12\x16.google.protobuf.Empty\x1a\x0f.file.ListFiles\x126\n" +
 	"\n" +
 	"UploadFile\x12\x10.file.FileStream\x1a\x14.file.UploadResponse(\x01\x120\n" +
@@ -39,27 +87,41 @@ const file_internal_proto_gophkeeper_proto_rawDesc = "" +
 	"DeleteFile\x12\f.file.FileId\x1a\x16.google.protobuf.EmptyB\n" +
 	"Z\b./;protob\x06proto3"
 
+var (
+	file_internal_proto_gophkeeper_proto_rawDescOnce sync.Once
+	file_internal_proto_gophkeeper_proto_rawDescData []byte
+)
+
+func file_internal_proto_gophkeeper_proto_rawDescGZIP() []byte {
+	file_internal_proto_gophkeeper_proto_rawDescOnce.Do(func() {
+		file_internal_proto_gophkeeper_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_internal_proto_gophkeeper_proto_rawDesc), len(file_internal_proto_gophkeeper_proto_rawDesc)))
+	})
+	return file_internal_proto_gophkeeper_proto_rawDescData
+}
+
+var file_internal_proto_gophkeeper_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_internal_proto_gophkeeper_proto_goTypes = []any{
-	(*UserCred)(nil),       // 0: user.UserCred
-	(*empty.Empty)(nil),    // 1: google.protobuf.Empty
-	(*FileStream)(nil),     // 2: file.FileStream
-	(*FileId)(nil),         // 3: file.FileId
-	(*ListFiles)(nil),      // 4: file.ListFiles
-	(*UploadResponse)(nil), // 5: file.UploadResponse
+	(*ServicePublicKey)(nil), // 0: gophkeeper.ServicePublicKey
+	(*UserData)(nil),         // 1: user.UserData
+	(*empty.Empty)(nil),      // 2: google.protobuf.Empty
+	(*FileStream)(nil),       // 3: file.FileStream
+	(*FileId)(nil),           // 4: file.FileId
+	(*ListFiles)(nil),        // 5: file.ListFiles
+	(*UploadResponse)(nil),   // 6: file.UploadResponse
 }
 var file_internal_proto_gophkeeper_proto_depIdxs = []int32{
-	0, // 0: gophkeeper.GophKeeperService.Register:input_type -> user.UserCred
-	0, // 1: gophkeeper.GophKeeperService.Login:input_type -> user.UserCred
-	1, // 2: gophkeeper.GophKeeperService.GetUserFiles:input_type -> google.protobuf.Empty
-	2, // 3: gophkeeper.GophKeeperService.UploadFile:input_type -> file.FileStream
-	3, // 4: gophkeeper.GophKeeperService.DownloadFile:input_type -> file.FileId
-	3, // 5: gophkeeper.GophKeeperService.DeleteFile:input_type -> file.FileId
-	1, // 6: gophkeeper.GophKeeperService.Register:output_type -> google.protobuf.Empty
-	1, // 7: gophkeeper.GophKeeperService.Login:output_type -> google.protobuf.Empty
-	4, // 8: gophkeeper.GophKeeperService.GetUserFiles:output_type -> file.ListFiles
-	5, // 9: gophkeeper.GophKeeperService.UploadFile:output_type -> file.UploadResponse
-	2, // 10: gophkeeper.GophKeeperService.DownloadFile:output_type -> file.FileStream
-	1, // 11: gophkeeper.GophKeeperService.DeleteFile:output_type -> google.protobuf.Empty
+	1, // 0: gophkeeper.GophKeeperService.Register:input_type -> user.UserData
+	1, // 1: gophkeeper.GophKeeperService.Login:input_type -> user.UserData
+	2, // 2: gophkeeper.GophKeeperService.GetUserFiles:input_type -> google.protobuf.Empty
+	3, // 3: gophkeeper.GophKeeperService.UploadFile:input_type -> file.FileStream
+	4, // 4: gophkeeper.GophKeeperService.DownloadFile:input_type -> file.FileId
+	4, // 5: gophkeeper.GophKeeperService.DeleteFile:input_type -> file.FileId
+	0, // 6: gophkeeper.GophKeeperService.Register:output_type -> gophkeeper.ServicePublicKey
+	0, // 7: gophkeeper.GophKeeperService.Login:output_type -> gophkeeper.ServicePublicKey
+	5, // 8: gophkeeper.GophKeeperService.GetUserFiles:output_type -> file.ListFiles
+	6, // 9: gophkeeper.GophKeeperService.UploadFile:output_type -> file.UploadResponse
+	3, // 10: gophkeeper.GophKeeperService.DownloadFile:output_type -> file.FileStream
+	2, // 11: gophkeeper.GophKeeperService.DeleteFile:output_type -> google.protobuf.Empty
 	6, // [6:12] is the sub-list for method output_type
 	0, // [0:6] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -80,12 +142,13 @@ func file_internal_proto_gophkeeper_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_proto_gophkeeper_proto_rawDesc), len(file_internal_proto_gophkeeper_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   0,
+			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_internal_proto_gophkeeper_proto_goTypes,
 		DependencyIndexes: file_internal_proto_gophkeeper_proto_depIdxs,
+		MessageInfos:      file_internal_proto_gophkeeper_proto_msgTypes,
 	}.Build()
 	File_internal_proto_gophkeeper_proto = out.File
 	file_internal_proto_gophkeeper_proto_goTypes = nil

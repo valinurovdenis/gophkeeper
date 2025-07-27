@@ -21,28 +21,29 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type UserCred struct {
+type UserData struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Login         string                 `protobuf:"bytes,1,opt,name=login,proto3" json:"login,omitempty"`
 	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	PublicKey     []byte                 `protobuf:"bytes,3,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *UserCred) Reset() {
-	*x = UserCred{}
+func (x *UserData) Reset() {
+	*x = UserData{}
 	mi := &file_internal_proto_user_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *UserCred) String() string {
+func (x *UserData) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UserCred) ProtoMessage() {}
+func (*UserData) ProtoMessage() {}
 
-func (x *UserCred) ProtoReflect() protoreflect.Message {
+func (x *UserData) ProtoReflect() protoreflect.Message {
 	mi := &file_internal_proto_user_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -54,33 +55,42 @@ func (x *UserCred) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UserCred.ProtoReflect.Descriptor instead.
-func (*UserCred) Descriptor() ([]byte, []int) {
+// Deprecated: Use UserData.ProtoReflect.Descriptor instead.
+func (*UserData) Descriptor() ([]byte, []int) {
 	return file_internal_proto_user_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *UserCred) GetLogin() string {
+func (x *UserData) GetLogin() string {
 	if x != nil {
 		return x.Login
 	}
 	return ""
 }
 
-func (x *UserCred) GetPassword() string {
+func (x *UserData) GetPassword() string {
 	if x != nil {
 		return x.Password
 	}
 	return ""
 }
 
+func (x *UserData) GetPublicKey() []byte {
+	if x != nil {
+		return x.PublicKey
+	}
+	return nil
+}
+
 var File_internal_proto_user_proto protoreflect.FileDescriptor
 
 const file_internal_proto_user_proto_rawDesc = "" +
 	"\n" +
-	"\x19internal/proto/user.proto\x12\x04user\"<\n" +
-	"\bUserCred\x12\x14\n" +
+	"\x19internal/proto/user.proto\x12\x04user\"[\n" +
+	"\bUserData\x12\x14\n" +
 	"\x05login\x18\x01 \x01(\tR\x05login\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpasswordB\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword\x12\x1d\n" +
+	"\n" +
+	"public_key\x18\x03 \x01(\fR\tpublicKeyB\n" +
 	"Z\b./;protob\x06proto3"
 
 var (
@@ -97,7 +107,7 @@ func file_internal_proto_user_proto_rawDescGZIP() []byte {
 
 var file_internal_proto_user_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_internal_proto_user_proto_goTypes = []any{
-	(*UserCred)(nil), // 0: user.UserCred
+	(*UserData)(nil), // 0: user.UserData
 }
 var file_internal_proto_user_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type

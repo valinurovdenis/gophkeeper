@@ -4,7 +4,8 @@ package user;
 
 option go_package = "./;proto";
 
-message UserCred {
+message UserData {
     string login = 1;
     string password = 2;
+    bytes public_key = 3;
 }
