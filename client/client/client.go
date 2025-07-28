@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/valinurovdenis/gophkeeper/internal/app/config"
+	"github.com/valinurovdenis/gophkeeper/internal/app/encryption"
 	"github.com/valinurovdenis/gophkeeper/internal/app/filestorage"
 	pb "github.com/valinurovdenis/gophkeeper/internal/proto"
 
@@ -70,23 +71,38 @@ func paramIsEmpty(param string, name string) bool {
 }
 
 func (c *GophKeeperClient) uploadFileWithProgress(stream pb.GophKeeperService_UploadFileClient, file *os.File, totalSize uint64, filename string, comment string) {
-	stream.Send(&pb.FileStream{Data: &pb.FileStream_Info{Info: &pb.FileInfo{Filename: filename, Comment: comment, Size: totalSize}}})
+	key, err := encryption.GenerateSymmetricFileEncryptionKey()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	encryptedKey, err := encryption.EncryptFileEncryptionKey(key, encryption.ServerPublicKey())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	stream.Send(&pb.FileStream{Data: &pb.FileStream_Info{Info: &pb.FileInfo{Filename: filename, Comment: comment, Size: totalSize, EncryptionKey: encryptedKey}}})
 	reader := bufio.NewReader(file)
 	buffer := make([]byte, filestorage.ChunkSize)
 	uploadedSize := int64(0)
 	progressBar := NewProgressBar("Uploading", int64(totalSize))
 	for {
 		progressBar.Set(uploadedSize)
-		n, err := reader.Read(buffer)
-		if err != nil {
-			if err == io.EOF {
+		n, errProgress := reader.Read(buffer)
+		if errProgress != nil {
+			if errProgress == io.EOF {
 				break
 			}
-			fmt.Println(err)
+			fmt.Println(errProgress)
 			return
 		}
-		if err = stream.Send(&pb.FileStream{Data: &pb.FileStream_ChunkData{ChunkData: buffer[:n]}}); err != nil {
-			fmt.Println(err)
+		encryptedBuf, errProgress := encryption.EncryptFileData(key, buffer[:n])
+		if errProgress != nil {
+			fmt.Printf("Failed to encrypt data: %s\n", errProgress)
+			return
+		}
+		if errProgress = stream.Send(&pb.FileStream{Data: &pb.FileStream_ChunkData{ChunkData: encryptedBuf}}); err != nil {
+			fmt.Println(errProgress)
 			return
 		}
 		uploadedSize += int64(n)
@@ -142,6 +158,11 @@ func (c *GophKeeperClient) downloadFileWithProgress(ctx context.Context, fileId 
 		fmt.Println("Can't get file metainfo.")
 		return
 	}
+	encryptedKey, err := encryption.DecryptFileEncryptionKey(res.GetInfo().GetEncryptionKey(), encryption.ClientPrivateKey())
+	if err != nil {
+		fmt.Println("can't decrypt encryption key from file metainfo.")
+		return
+	}
 	progressBar := NewProgressBar("Downloading", int64(res.GetInfo().Size))
 	for {
 		progressBar.Set(uploadedSize)
@@ -154,7 +175,12 @@ func (c *GophKeeperClient) downloadFileWithProgress(ctx context.Context, fileId 
 			return
 		}
 		if len(res.GetChunkData()) > 0 {
-			file.Write(res.GetChunkData())
+			decryptedData, err := encryption.DecryptFileData(encryptedKey, res.GetChunkData())
+			if err != nil {
+				fmt.Println("error when decrypt file data.")
+				return
+			}
+			file.Write(decryptedData)
 			uploadedSize += int64(len(res.GetChunkData()))
 		}
 	}
@@ -204,8 +230,7 @@ func saveAuthToken(header metadata.MD) error {
 
 	var err error
 	var file *os.File
-	config := config.GetConfig()
-	if file, err = os.OpenFile(config.AuthTokenFile, os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+	if file, err = os.OpenFile(config.GetConfig().AuthTokenFile, os.O_CREATE|os.O_WRONLY, 0644); err == nil {
 		defer file.Close()
 		_, err = file.WriteString(token)
 	}
@@ -216,10 +241,14 @@ func (c *GophKeeperClient) Register(ctx context.Context, login string, password 
 	if paramIsEmpty(login, "login") || paramIsEmpty(password, "password") {
 		return
 	}
+	encryption.CreateKeysIfAbsent(false)
 	var header metadata.MD
 	var err error
-	if _, err = c.client.Register(ctx, &pb.UserCred{Login: login, Password: password}, grpc.Header(&header)); err == nil {
-		err = saveAuthToken(header)
+	var serverPublicKey *pb.ServicePublicKey
+	if serverPublicKey, err = c.client.Register(ctx, &pb.UserData{Login: login, Password: password, PublicKey: encryption.ClientPublicKey()}, grpc.Header(&header)); err == nil {
+		if err = encryption.SaveKeyToFile(serverPublicKey.GetPublicKey(), config.GetConfig().ServerPublicKeyPath); err == nil {
+			err = saveAuthToken(header)
+		}
 	}
 	if err != nil {
 		fmt.Println(err)
@@ -230,10 +259,14 @@ func (c *GophKeeperClient) Login(ctx context.Context, login string, password str
 	if paramIsEmpty(login, "login") || paramIsEmpty(password, "password") {
 		return
 	}
+	encryption.CreateKeysIfAbsent(false)
 	var header metadata.MD
 	var err error
-	if _, err = c.client.Login(ctx, &pb.UserCred{Login: login, Password: password}, grpc.Header(&header)); err == nil {
-		err = saveAuthToken(header)
+	var serverPublicKey *pb.ServicePublicKey
+	if serverPublicKey, err = c.client.Login(ctx, &pb.UserData{Login: login, Password: password, PublicKey: encryption.ClientPublicKey()}, grpc.Header(&header)); err == nil {
+		if err = encryption.SaveKeyToFile(serverPublicKey.GetPublicKey(), config.GetConfig().ServerPublicKeyPath); err == nil {
+			err = saveAuthToken(header)
+		}
 	}
 	if err != nil {
 		fmt.Println(err)

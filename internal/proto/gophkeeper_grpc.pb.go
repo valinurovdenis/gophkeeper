@@ -32,8 +32,8 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GophKeeperServiceClient interface {
-	Register(ctx context.Context, in *UserCred, opts ...grpc.CallOption) (*empty.Empty, error)
-	Login(ctx context.Context, in *UserCred, opts ...grpc.CallOption) (*empty.Empty, error)
+	Register(ctx context.Context, in *UserData, opts ...grpc.CallOption) (*ServicePublicKey, error)
+	Login(ctx context.Context, in *UserData, opts ...grpc.CallOption) (*ServicePublicKey, error)
 	GetUserFiles(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ListFiles, error)
 	UploadFile(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[FileStream, UploadResponse], error)
 	DownloadFile(ctx context.Context, in *FileId, opts ...grpc.CallOption) (grpc.ServerStreamingClient[FileStream], error)
@@ -48,9 +48,9 @@ func NewGophKeeperServiceClient(cc grpc.ClientConnInterface) GophKeeperServiceCl
 	return &gophKeeperServiceClient{cc}
 }
 
-func (c *gophKeeperServiceClient) Register(ctx context.Context, in *UserCred, opts ...grpc.CallOption) (*empty.Empty, error) {
+func (c *gophKeeperServiceClient) Register(ctx context.Context, in *UserData, opts ...grpc.CallOption) (*ServicePublicKey, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(empty.Empty)
+	out := new(ServicePublicKey)
 	err := c.cc.Invoke(ctx, GophKeeperService_Register_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -58,9 +58,9 @@ func (c *gophKeeperServiceClient) Register(ctx context.Context, in *UserCred, op
 	return out, nil
 }
 
-func (c *gophKeeperServiceClient) Login(ctx context.Context, in *UserCred, opts ...grpc.CallOption) (*empty.Empty, error) {
+func (c *gophKeeperServiceClient) Login(ctx context.Context, in *UserData, opts ...grpc.CallOption) (*ServicePublicKey, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(empty.Empty)
+	out := new(ServicePublicKey)
 	err := c.cc.Invoke(ctx, GophKeeperService_Login_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -124,8 +124,8 @@ func (c *gophKeeperServiceClient) DeleteFile(ctx context.Context, in *FileId, op
 // All implementations must embed UnimplementedGophKeeperServiceServer
 // for forward compatibility.
 type GophKeeperServiceServer interface {
-	Register(context.Context, *UserCred) (*empty.Empty, error)
-	Login(context.Context, *UserCred) (*empty.Empty, error)
+	Register(context.Context, *UserData) (*ServicePublicKey, error)
+	Login(context.Context, *UserData) (*ServicePublicKey, error)
 	GetUserFiles(context.Context, *empty.Empty) (*ListFiles, error)
 	UploadFile(grpc.ClientStreamingServer[FileStream, UploadResponse]) error
 	DownloadFile(*FileId, grpc.ServerStreamingServer[FileStream]) error
@@ -140,10 +140,10 @@ type GophKeeperServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedGophKeeperServiceServer struct{}
 
-func (UnimplementedGophKeeperServiceServer) Register(context.Context, *UserCred) (*empty.Empty, error) {
+func (UnimplementedGophKeeperServiceServer) Register(context.Context, *UserData) (*ServicePublicKey, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
 }
-func (UnimplementedGophKeeperServiceServer) Login(context.Context, *UserCred) (*empty.Empty, error) {
+func (UnimplementedGophKeeperServiceServer) Login(context.Context, *UserData) (*ServicePublicKey, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
 }
 func (UnimplementedGophKeeperServiceServer) GetUserFiles(context.Context, *empty.Empty) (*ListFiles, error) {
@@ -180,7 +180,7 @@ func RegisterGophKeeperServiceServer(s grpc.ServiceRegistrar, srv GophKeeperServ
 }
 
 func _GophKeeperService_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserCred)
+	in := new(UserData)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -192,13 +192,13 @@ func _GophKeeperService_Register_Handler(srv interface{}, ctx context.Context, d
 		FullMethod: GophKeeperService_Register_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GophKeeperServiceServer).Register(ctx, req.(*UserCred))
+		return srv.(GophKeeperServiceServer).Register(ctx, req.(*UserData))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _GophKeeperService_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserCred)
+	in := new(UserData)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -210,7 +210,7 @@ func _GophKeeperService_Login_Handler(srv interface{}, ctx context.Context, dec 
 		FullMethod: GophKeeperService_Login_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GophKeeperServiceServer).Login(ctx, req.(*UserCred))
+		return srv.(GophKeeperServiceServer).Login(ctx, req.(*UserData))
 	}
 	return interceptor(ctx, in, info, handler)
 }

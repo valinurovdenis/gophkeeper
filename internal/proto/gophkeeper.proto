@@ -8,9 +8,13 @@ import "google/protobuf/empty.proto";
 
 option go_package = "./;proto";
 
+message ServicePublicKey {
+  bytes public_key = 1;
+}
+
 service GophKeeperService {
-  rpc Register(user.UserCred) returns (google.protobuf.Empty);
-  rpc Login(user.UserCred) returns (google.protobuf.Empty);
+  rpc Register(user.UserData) returns (ServicePublicKey);
+  rpc Login(user.UserData) returns (ServicePublicKey);
   rpc GetUserFiles(google.protobuf.Empty) returns (file.ListFiles);
 
   rpc UploadFile(stream file.FileStream) returns (file.UploadResponse);

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/valinurovdenis/gophkeeper/internal/app/encryption"
 	"github.com/valinurovdenis/gophkeeper/internal/app/filestorage"
 	"github.com/valinurovdenis/gophkeeper/internal/app/metadatastorage"
 	pb "github.com/valinurovdenis/gophkeeper/internal/proto"
@@ -41,6 +42,10 @@ func (h *GophKeeperService) UploadFile(stream pb.GophKeeperService_UploadFileSer
 	if info == nil {
 		return fmt.Errorf("no upload file info")
 	}
+	_, err = encryption.DecryptFileEncryptionKey(info.GetEncryptionKey(), encryption.ServerPrivateKey())
+	if err != nil {
+		return fmt.Errorf("wrong encryption key")
+	}
 
 	info.Login = login
 	if info.GetCreated() == 0 {
@@ -57,7 +62,7 @@ func (h *GophKeeperService) UploadFile(stream pb.GophKeeperService_UploadFileSer
 	return h.metaDataStorage.AddFileInfo(stream.Context(), info)
 }
 
-func (h *GophKeeperService) DownloadFile(fileId *pb.FileId, stream pb.GophKeeperService_DownloadFileServer, login string) error {
+func (h *GophKeeperService) DownloadFile(fileId *pb.FileId, stream pb.GophKeeperService_DownloadFileServer, login string, clientPublicKey []byte) error {
 	info, err := h.metaDataStorage.GetFileById(stream.Context(), fileId.GetId())
 	if err != nil {
 		return fmt.Errorf("error getting file metainfo: %w", err)
@@ -65,12 +70,18 @@ func (h *GophKeeperService) DownloadFile(fileId *pb.FileId, stream pb.GophKeeper
 	if info.Login != login {
 		return ErrNotOwn
 	}
+	key, _ := encryption.DecryptFileEncryptionKey(info.EncryptionKey, encryption.ServerPrivateKey())
+	encryptedKey, err := encryption.EncryptFileEncryptionKey(key, clientPublicKey)
+	if err != nil {
+		return fmt.Errorf("cannot encrypt file encryption key: %w", err)
+	}
 	stream.Send(&pb.FileStream{Data: &pb.FileStream_Info{Info: &pb.FileInfo{
-		Id:      info.Id,
-		Login:   info.Login,
-		Comment: info.Comment,
-		Created: info.Created,
-		Size:    info.Size}}})
+		Id:            info.Id,
+		Login:         info.Login,
+		Comment:       info.Comment,
+		Created:       info.Created,
+		Size:          info.Size,
+		EncryptionKey: encryptedKey}}})
 	return h.fileStorage.Download(stream, fileId.GetId())
 }
 

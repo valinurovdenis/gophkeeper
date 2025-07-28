@@ -31,18 +31,18 @@ func (s *PostgresqlStorage) init() error {
 		return err
 	}
 	defer tx.Rollback()
-	tx.Exec(`CREATE TABLE fileinfo("id" TEXT PRIMARY KEY, "login" TEXT NOT NULL CHECK ("login" <> ''), "filename" TEXT, "comment" TEXT, "created" TIMESTAMP, "modified" TIMESTAMP, "size" INT)`)
+	tx.Exec(`CREATE TABLE fileinfo("id" TEXT PRIMARY KEY, "login" TEXT NOT NULL CHECK ("login" <> ''), "filename" TEXT, "comment" TEXT, "created" TIMESTAMP, "modified" TIMESTAMP, "size" INT, "encryption_key" bytea)`)
 	tx.Exec(`CREATE INDEX login_index ON fileinfo USING btree(login)`)
 	return tx.Commit()
 }
 
 func (s *PostgresqlStorage) GetFileById(ctx context.Context, fileId string) (*pb.FileInfo, error) {
 	row := s.DB.QueryRowContext(ctx,
-		"SELECT id, login, filename, comment, created, size FROM fileinfo WHERE id = $1", fileId)
+		"SELECT id, login, filename, comment, created, size, encryption_key FROM fileinfo WHERE id = $1", fileId)
 	file := pb.FileInfo{}
 	var created time.Time
 	var id string
-	err := row.Scan(&id, &file.Login, &file.Filename, &file.Comment, &created, &file.Size)
+	err := row.Scan(&id, &file.Login, &file.Filename, &file.Comment, &created, &file.Size, &file.EncryptionKey)
 	file.Id = &pb.FileId{Id: id}
 	file.Created = uint64(created.Unix())
 	if err != nil {
@@ -54,7 +54,7 @@ func (s *PostgresqlStorage) GetFileById(ctx context.Context, fileId string) (*pb
 func (s *PostgresqlStorage) GetFilesByLogin(ctx context.Context, login string) (*pb.ListFiles, error) {
 	var files []*pb.FileInfo
 	rows, err := s.DB.QueryContext(ctx,
-		"SELECT id, login, filename, comment, created, size FROM fileinfo WHERE login = $1", login)
+		"SELECT id, login, filename, comment, created, size, encryption_key FROM fileinfo WHERE login = $1", login)
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin select query: %w", err)
 	}
@@ -66,7 +66,7 @@ func (s *PostgresqlStorage) GetFilesByLogin(ctx context.Context, login string) (
 		file := pb.FileInfo{}
 		var created time.Time
 		var id string
-		err = rows.Scan(&id, &file.Login, &file.Filename, &file.Comment, &created, &file.Size)
+		err = rows.Scan(&id, &file.Login, &file.Filename, &file.Comment, &created, &file.Size, &file.EncryptionKey)
 		file.Id = &pb.FileId{Id: id}
 		file.Created = uint64(created.Unix())
 		if err != nil {
@@ -80,8 +80,9 @@ func (s *PostgresqlStorage) GetFilesByLogin(ctx context.Context, login string) (
 
 func (s *PostgresqlStorage) AddFileInfo(ctx context.Context, fileInfo *pb.FileInfo) error {
 	_, err := s.DB.ExecContext(ctx,
-		"INSERT into fileinfo (id, login, filename, comment, created, size) VALUES($1, $2, $3, $4, $5, $6)",
-		fileInfo.GetId().GetId(), fileInfo.GetLogin(), fileInfo.GetFilename(), fileInfo.GetComment(), time.Unix(int64(fileInfo.GetCreated()), 0), fileInfo.GetSize())
+		"INSERT into fileinfo (id, login, filename, comment, created, size, encryption_key) VALUES($1, $2, $3, $4, $5, $6, $7)",
+		fileInfo.GetId().GetId(), fileInfo.GetLogin(), fileInfo.GetFilename(), fileInfo.GetComment(),
+		time.Unix(int64(fileInfo.GetCreated()), 0), fileInfo.GetSize(), fileInfo.GetEncryptionKey())
 	if e, ok := err.(*pgconn.PgError); ok && e.Code == pgerrcode.UniqueViolation {
 		err = ErrConflictMetaId
 	}

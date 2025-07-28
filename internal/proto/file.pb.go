@@ -74,6 +74,7 @@ type FileInfo struct {
 	Modified      uint64                 `protobuf:"varint,5,opt,name=modified,proto3" json:"modified,omitempty"`
 	Size          uint64                 `protobuf:"varint,6,opt,name=size,proto3" json:"size,omitempty"`
 	Comment       string                 `protobuf:"bytes,7,opt,name=comment,proto3" json:"comment,omitempty"`
+	EncryptionKey []byte                 `protobuf:"bytes,8,opt,name=encryption_key,json=encryptionKey,proto3" json:"encryption_key,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -155,6 +156,13 @@ func (x *FileInfo) GetComment() string {
 		return x.Comment
 	}
 	return ""
+}
+
+func (x *FileInfo) GetEncryptionKey() []byte {
+	if x != nil {
+		return x.EncryptionKey
+	}
+	return nil
 }
 
 type FileStream struct {
@@ -333,7 +341,7 @@ const file_internal_proto_file_proto_rawDesc = "" +
 	"\n" +
 	"\x19internal/proto/file.proto\x12\x04file\"\x18\n" +
 	"\x06FileId\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\xbe\x01\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\xe5\x01\n" +
 	"\bFileInfo\x12\x1c\n" +
 	"\x02id\x18\x01 \x01(\v2\f.file.FileIdR\x02id\x12\x1a\n" +
 	"\bfilename\x18\x02 \x01(\tR\bfilename\x12\x14\n" +
@@ -341,7 +349,8 @@ const file_internal_proto_file_proto_rawDesc = "" +
 	"\acreated\x18\x04 \x01(\x04R\acreated\x12\x1a\n" +
 	"\bmodified\x18\x05 \x01(\x04R\bmodified\x12\x12\n" +
 	"\x04size\x18\x06 \x01(\x04R\x04size\x12\x18\n" +
-	"\acomment\x18\a \x01(\tR\acomment\"[\n" +
+	"\acomment\x18\a \x01(\tR\acomment\x12%\n" +
+	"\x0eencryption_key\x18\b \x01(\fR\rencryptionKey\"[\n" +
 	"\n" +
 	"FileStream\x12$\n" +
 	"\x04info\x18\x01 \x01(\v2\x0e.file.FileInfoH\x00R\x04info\x12\x1f\n" +

@@ -26,11 +26,11 @@ func ComparePasswordHash(hashedPassword []byte, originalPassword string) error {
 }
 
 // Get login from incoming context.
-func GetLoginFromContext(ctx context.Context) string {
+func GetVarFromContext(ctx context.Context, name string) string {
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
-		login := md.Get("login")
+		login := md.Get(name)
 		if len(login) > 0 {
-			return md.Get("login")[0]
+			return md.Get(name)[0]
 		}
 	}
 	return ""
@@ -39,7 +39,8 @@ func GetLoginFromContext(ctx context.Context) string {
 // Struct for parsing user id from jwt token.
 type Claims struct {
 	jwt.RegisteredClaims
-	Login string
+	Login     string
+	PublicKey string
 }
 
 const tokenExpiration = time.Hour * 3
@@ -60,12 +61,13 @@ func NewAuthenticator(secretKey string, userStorage userstorage.UserStorage) *Jw
 }
 
 // Builds jwt string from given user id.
-func (a *JwtAuthenticator) BuildJWTString(login string) (string, error) {
+func (a *JwtAuthenticator) BuildJWTString(login string, publicKey []byte) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(tokenExpiration)),
 		},
-		Login: login,
+		Login:     login,
+		PublicKey: string(publicKey),
 	})
 
 	tokenString, err := token.SignedString([]byte(a.SecretKey))
@@ -78,7 +80,7 @@ func (a *JwtAuthenticator) BuildJWTString(login string) (string, error) {
 
 // Parses user id from jwt token string.
 // Returns error if no jwt token is not valid.
-func (a *JwtAuthenticator) GetLogin(tokenString string) (string, error) {
+func (a *JwtAuthenticator) GetJwtClaims(tokenString string) (*Claims, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims,
 		func(t *jwt.Token) (interface{}, error) {
@@ -89,14 +91,27 @@ func (a *JwtAuthenticator) GetLogin(tokenString string) (string, error) {
 		})
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if !token.Valid {
-		return "", fmt.Errorf("invalid token")
+		return nil, fmt.Errorf("invalid token")
 	}
 
-	return claims.Login, nil
+	return claims, nil
+}
+
+func (a *JwtAuthenticator) getAuthContext(ctx context.Context) (context.Context, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	authorization := md.Get("Authorization")
+	if ok && len(authorization) > 0 {
+		claims, err := a.GetJwtClaims(authorization[0])
+		if err == nil {
+			md = metadata.Pairs("login", claims.Login, "public_key", claims.PublicKey)
+			return metadata.NewIncomingContext(ctx, md), nil
+		}
+	}
+	return context.Background(), fmt.Errorf("unauthorized")
 }
 
 // Middleware checks whether there is authorization cookie with valid user.
@@ -104,21 +119,11 @@ func (a *JwtAuthenticator) GetLogin(tokenString string) (string, error) {
 func (a *JwtAuthenticator) CheckAuth(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler) (interface{}, error) {
 
-	md, ok := metadata.FromIncomingContext(ctx)
-	authorization := md.Get("Authorization")
-	userAuthenticated := false
-	if ok && len(authorization) > 0 {
-		login, err := a.GetLogin(authorization[0])
-		if err == nil {
-			md = metadata.Pairs("login", login)
-			ctx = metadata.NewIncomingContext(ctx, md)
-			userAuthenticated = true
-		}
-	}
-	if !userAuthenticated {
+	authCtx, err := a.getAuthContext(ctx)
+	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "Unauthorized")
 	}
-	return handler(ctx, req)
+	return handler(authCtx, req)
 }
 
 type serverStreamWrapper struct {
@@ -131,21 +136,9 @@ func (w serverStreamWrapper) Context() context.Context { return w.ctx }
 // Same as CheckAuth for streaming.
 func (a *JwtAuthenticator) CheckStreamAuth(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 
-	md, ok := metadata.FromIncomingContext(stream.Context())
-	authorization := md.Get("Authorization")
-	userAuthenticated := false
-	var wrappedStream serverStreamWrapper
-	if ok && len(authorization) > 0 {
-		login, err := a.GetLogin(authorization[0])
-		if err == nil {
-			md = metadata.New(map[string]string{"login": login})
-			ctx := metadata.NewIncomingContext(stream.Context(), md)
-			wrappedStream = serverStreamWrapper{stream, ctx}
-			userAuthenticated = true
-		}
-	}
-	if !userAuthenticated {
+	authCtx, err := a.getAuthContext(stream.Context())
+	if err != nil {
 		return status.Errorf(codes.Unauthenticated, "Unauthorized")
 	}
-	return handler(srv, wrappedStream)
+	return handler(srv, serverStreamWrapper{stream, authCtx})
 }
