@@ -38,4 +38,4 @@ export SERVER_ADDRESS="localhost:8080"
 ./gophkeeper delete --id {id}
 
 ### Get current build version:
-./gophkeer version
+./gophkeeper version
