@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/valinurovdenis/gophkeeper/client/client"
+	"github.com/valinurovdenis/gophkeeper/internal/app/encryption"
 )
 
 var (
@@ -21,6 +22,7 @@ func AddCommands(rootCmd *cobra.Command) {
 
 func Execute() {
 	client, err := client.NewGophKeeperClient()
+	encryption.InitData()
 
 	var (
 		filePath string

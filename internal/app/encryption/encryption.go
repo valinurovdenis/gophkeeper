@@ -22,7 +22,7 @@ var (
 	serverPublicKey  *[]byte = nil
 	clientPrivateKey *[]byte = nil
 	clientPublicKey  *[]byte = nil
-	appConfig                = config.GetConfig()
+	appConfig                = config.DefaultConfig
 )
 
 // Generate private, public rsa keys.
@@ -103,11 +103,20 @@ func getCachedKeyFromFile(filepath string, key *[]byte) func() []byte {
 
 // Getters for pem keys from file.
 var (
-	ServerPrivateKey func() []byte = getCachedKeyFromFile(appConfig.ServerPrivateKeyPath, serverPrivateKey)
-	ServerPublicKey  func() []byte = getCachedKeyFromFile(appConfig.ServerPublicKeyPath, serverPublicKey)
-	ClientPrivateKey func() []byte = getCachedKeyFromFile(appConfig.ClientPrivateKeyPath, clientPrivateKey)
-	ClientPublicKey  func() []byte = getCachedKeyFromFile(appConfig.ClientPublicKeyPath, clientPublicKey)
+	ServerPrivateKey = func() []byte { return []byte("mock") }
+	ServerPublicKey  = func() []byte { return []byte("mock") }
+	ClientPrivateKey = func() []byte { return []byte("mock") }
+	ClientPublicKey  = func() []byte { return []byte("mock") }
 )
+
+// Init encryption data.
+func InitData() {
+	appConfig = config.GetConfig()
+	ServerPrivateKey = getCachedKeyFromFile(appConfig.ServerPrivateKeyPath, serverPrivateKey)
+	ServerPublicKey = getCachedKeyFromFile(appConfig.ServerPublicKeyPath, serverPublicKey)
+	ClientPrivateKey = getCachedKeyFromFile(appConfig.ClientPrivateKeyPath, clientPrivateKey)
+	ClientPublicKey = getCachedKeyFromFile(appConfig.ClientPublicKeyPath, clientPublicKey)
+}
 
 // Encrypt symmetric file encryption key with rsa public key.
 func EncryptFileEncryptionKey(fileKey, encryptionKey []byte) ([]byte, error) {

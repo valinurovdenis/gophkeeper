@@ -14,7 +14,7 @@ import (
 )
 
 // Error in case when user with given login doesnt own file with given id.
-var ErrNotOwn = errors.New("conflicting id")
+var ErrNotOwn = errors.New("file not owned")
 
 type GophKeeperService struct {
 	fileStorage     filestorage.StreamingFileStorage
@@ -44,7 +44,7 @@ func (h *GophKeeperService) UploadFile(stream pb.GophKeeperService_UploadFileSer
 	}
 	_, err = encryption.DecryptFileEncryptionKey(info.GetEncryptionKey(), encryption.ServerPrivateKey())
 	if err != nil {
-		return fmt.Errorf("wrong encryption key")
+		return fmt.Errorf("wrong encryption key %w", err)
 	}
 
 	info.Login = login
@@ -77,6 +77,7 @@ func (h *GophKeeperService) DownloadFile(fileId *pb.FileId, stream pb.GophKeeper
 	}
 	stream.Send(&pb.FileStream{Data: &pb.FileStream_Info{Info: &pb.FileInfo{
 		Id:            info.Id,
+		Filename:      info.Filename,
 		Login:         info.Login,
 		Comment:       info.Comment,
 		Created:       info.Created,

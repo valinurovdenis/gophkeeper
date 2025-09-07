@@ -8,6 +8,7 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/valinurovdenis/gophkeeper/internal/app/auth"
 	"github.com/valinurovdenis/gophkeeper/internal/app/config"
+	"github.com/valinurovdenis/gophkeeper/internal/app/encryption"
 	"github.com/valinurovdenis/gophkeeper/internal/app/filestorage"
 	"github.com/valinurovdenis/gophkeeper/internal/app/handlers"
 	"github.com/valinurovdenis/gophkeeper/internal/app/logger"
@@ -53,12 +54,13 @@ func Run() error {
 		return err
 	}
 	userStorage := userstorage.NewPostgresqlUserStorage(db)
-	auth := auth.NewAuthenticator(config.SecretKey, userStorage)
+	encryption.InitData()
+	auth := auth.NewAuthenticator(config.SecretKey)
 	grpcHandler, err := handlers.NewGophKeeperHandler(*service, *auth, userStorage)
 	if err != nil {
 		return err
 	}
 	grpcSrv := handlers.KeeperGrpcRouter(*grpcHandler)
-	listen, _ := net.Listen("tcp", config.LocalURL)
+	listen, _ := net.Listen("tcp", "localhost:8080")
 	return grpcSrv.Serve(listen)
 }
