@@ -3,7 +3,9 @@ Client-server application for storing files in cloud. Files are stored and trans
 
 ## Server
 cd gophkeeper/server
+
 go build .
+
 ./server --help
 
 ### Start example
@@ -11,12 +13,16 @@ go build .
 
 ## Client commands list:
 cd gophkeeper/client
+
 go build -o gophkeeper
+
 ./gophkeeper --help
+
 export SERVER_ADDRESS="localhost:8080"
 
 ### User register and login:
 ./gophkeeper register --login {login} --password {password}
+
 ./gophkeeper login --login {login} --password {password}
 
 ### List all user files:
