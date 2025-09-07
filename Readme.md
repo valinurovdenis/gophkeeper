@@ -1,5 +1,5 @@
 # gophkeeper
-Client-server application for storing files in cloud. Files are stored and transmitted in encrypted form. S3 and postgresql are used to store files data and user infos.
+Grpc client-server application for storing files in cloud. Files are stored and transmitted in encrypted form. S3 and postgresql are used to store files data and user infos.
 
 ## Server
 cd gophkeeper/server
