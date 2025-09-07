@@ -1,0 +1,48 @@
+version: '3.8'
+services:
+  app:
+    build:
+      context: ../../.
+      dockerfile: internal/docker/app.Dockerfile
+    image: go-app
+    container_name: go-app-container
+    ports:
+      - 8080:8080
+    volumes:
+      - ../:/app
+    environment:
+      - DATABASE_URL=postgresql://localhost/shortener?user=postgres&password=12345
+      - S3_ENDPOINT=minio
+      - S3_PORT=9000
+      - S3_ACCESS_KEY=minioadmin
+      - S3_SECRET_KEY=minioadmin
+      - S3_BUCKET_NAME=s3bucket
+    depends_on:
+      - db
+      - minio
+  db:
+    image: postgres:15.3
+    container_name: postgres
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345
+      POSTGRES_DB: shortener
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+  minio:
+    image: minio/minio:latest
+    container_name: minio-container
+    ports:
+      - "9000:9000"
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    volumes:
+      - minio-data:/data
+    command: server /data
+volumes:
+  postgres-data:
+  minio-data:

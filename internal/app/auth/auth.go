@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/valinurovdenis/gophkeeper/internal/app/userstorage"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -47,16 +46,14 @@ const tokenExpiration = time.Hour * 3
 
 // Class for authentication via jwt tokens.
 type JwtAuthenticator struct {
-	SecretKey   string
-	UserStorage userstorage.UserStorage
+	SecretKey string
 }
 
 // Returns new authenticator.
 // Requires secret key for jwt and storage for generatings user ids.
-func NewAuthenticator(secretKey string, userStorage userstorage.UserStorage) *JwtAuthenticator {
+func NewAuthenticator(secretKey string) *JwtAuthenticator {
 	return &JwtAuthenticator{
-		SecretKey:   secretKey,
-		UserStorage: userStorage,
+		SecretKey: secretKey,
 	}
 }
 
@@ -111,7 +108,7 @@ func (a *JwtAuthenticator) getAuthContext(ctx context.Context) (context.Context,
 			return metadata.NewIncomingContext(ctx, md), nil
 		}
 	}
-	return context.Background(), fmt.Errorf("unauthorized")
+	return ctx, fmt.Errorf("unauthorized")
 }
 
 // Middleware checks whether there is authorization cookie with valid user.

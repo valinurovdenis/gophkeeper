@@ -9,7 +9,7 @@ import (
 
 // Storage contains file blobs.
 //
-//go:generate mockery --name MetadataStorage
+//go:generate mockery --name StreamingFileStorage
 type StreamingFileStorage interface {
 	// Get file chunks.
 	Download(stream pb.GophKeeperService_DownloadFileServer, fileId string) error
